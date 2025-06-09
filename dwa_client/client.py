@@ -3,8 +3,16 @@ from typing import Dict, Any, List
 from dwa_client.auth import LoginSession
 from dwa_client.transport import Transport, HTTPTransport
 from dwa_client.cache import Cache, NullCache
-from dwa_client.resources import Folder, Object, Guid, Project, Document
+from dwa_client.resources import (
+    Folder,
+    Guid,
+    Project,
+    Document,
+    DocumentObject,
+    parse_doors_objects_from_html,
+)
 from rdflib import Graph
+import json
 
 
 class DWAClient:
@@ -66,6 +74,44 @@ class DWAClient:
         result = self._post_json("dwa/json/doors/node/getChildren", data)
         return result
 
+    def get_document_objects(
+        self,
+        document_guid: Guid,
+        start_index: int = 0,
+        fetch_count: int = 10000,
+        view_guid: str | None = None,
+    ) -> list[DocumentObject]:
+        """
+        Fetches and parses all objects from a document using getPage.
+        Returns a list of DocumentObject.
+        Raises RuntimeError if the server returns an error.
+        """
+        payload: dict[str, str] = {
+            "documentGuid": str(document_guid),
+            "startIndex": str(start_index),
+            "fetchCount": str(fetch_count),
+            "beforeOnly": "false",
+            "firstPageFallback": "false",
+            "isRefresh": "false",
+            "dwaUser": self.login.user,
+            "DWA_TOKEN": self.login.token,
+        }
+
+        if view_guid:
+            payload["viewGuid"] = view_guid
+
+        raw: str = self._post_raw("dwa/json/doors/documentnode/getPage", payload)
+        try:
+            resp_json = json.loads(raw)
+        except json.JSONDecodeError:
+            # Not JSON, so treat as HTML
+            return parse_doors_objects_from_html(raw)
+        if isinstance(resp_json, dict) and resp_json.get("success") == "false":
+            reason = resp_json.get("failureReason", {})
+            msg = reason.get("logMsg") or reason.get("msgKey") or "Unknown error"
+            raise RuntimeError(f"DOORS DWA error: {msg}")
+        raise RuntimeError("Unexpected JSON response from DOORS DWA.")
+
     # ---------- public domain helpers ------------------------------------
     def get_folder(self, guid: Guid) -> Folder:
         if guid in self._identity:
@@ -94,13 +140,11 @@ class DWAClient:
             res._hydrate(node)  # type: ignore[attr-defined]
             return res
         module_type = node.get("moduleType")
-        if module_type == "FOLDER":
-            res = Folder(self, node)
-        elif module_type == "PROJECT":
+        if module_type == "PROJECT":
             res = Project(self, node)
         elif module_type == "DOCUMENT":
             res = Document(self, node)
         else:
-            res = Object(self, node)
+            res = Folder(self, node)
         self._identity[guid] = res
         return res

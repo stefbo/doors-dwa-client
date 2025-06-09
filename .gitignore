@@ -206,5 +206,5 @@ dist
 **/credentials.py
 **/__pycache__
 
-examples/
+examples/**
 certificates/*.crt

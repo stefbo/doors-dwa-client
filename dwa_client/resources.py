@@ -14,6 +14,14 @@ if TYPE_CHECKING:
 
 
 class RemoteResource:
+    """Base class for all remote resources (Folder, Project, Document, etc.) in DOORS Web Access (DWA).
+
+    This class provides common functionality for handling remote resources,
+    including lazy loading, hydration, and basic metadata access.
+
+    Hydration is the process of populating the resource's metadata from the server.
+    """
+
     def __init__(
         self, client: DWAClient, guid: "Guid", meta: Dict[str, Any] | None = None
     ) -> None:
@@ -98,33 +106,12 @@ class Document(Folder):
 
         :param view_guid: Optional GUID of a specific view to fetch objects from.
         """
-        payload: dict[str, str] = {
-            "documentGuid": str(self.guid),
-            "startIndex": str(start_index),
-            "fetchCount": str(fetch_count),
-            "beforeOnly": "false",
-            "firstPageFallback": "false",
-            "isRefresh": "false",
-            "dwaUser": self._client.login.user,
-            "DWA_TOKEN": self._client.login.token,
-        }
-
-        if view_guid:
-            payload["viewGuid"] = view_guid
-
-        raw: str = self._client._post_raw(
-            "dwa/json/doors/documentnode/getPage", payload
+        return self._client.get_document_objects(
+            self.guid,
+            start_index=start_index,
+            fetch_count=fetch_count,
+            view_guid=view_guid,
         )
-        try:
-            resp_json = json.loads(raw)
-        except json.JSONDecodeError:
-            # Not JSON, so treat as HTML
-            return parse_doors_objects_from_html(raw)
-        if isinstance(resp_json, dict) and resp_json.get("success") == "false":
-            reason = resp_json.get("failureReason", {})
-            msg = reason.get("logMsg") or reason.get("msgKey") or "Unknown error"
-            raise RuntimeError(f"DOORS DWA error: {msg}")
-        raise RuntimeError("Unexpected JSON response from DOORS DWA.")
 
 
 class DocumentObject:
@@ -201,19 +188,19 @@ def parse_doors_objects_from_html(html: str) -> List[DocumentObject]:
     return artifacts
 
 
-class Object(RemoteResource):
-    """
-    Represents a requirement (“object”) row inside a module.
-    """
+# class Object(RemoteResource):
+#     """
+#     Represents a requirement (“object”) row inside a module.
+#     """
 
-    def __init__(self, client: DWAClient, node: Dict[str, Any]):
-        super().__init__(client, Guid(node["guid"]), node)
+#     def __init__(self, client: DWAClient, node: Dict[str, Any]):
+#         super().__init__(client, Guid(node["guid"]), node)
 
-    # module-specific helpers here: get_text(), links(), etc.
+#     # module-specific helpers here: get_text(), links(), etc.
 
-    def _lazy_load(self):
-        # placeholder – real call similar to _get_page
-        self._loaded = True
+#     def _lazy_load(self):
+#         # placeholder – real call similar to _get_page
+#         self._loaded = True
 
 
 class Guid(str):
