@@ -9,7 +9,13 @@
 
 ## Installation
 
-Clone this repository and install locally:
+Install from PyPI:
+
+```bash
+pip install doors-dwa-client
+```
+
+Alternatively, install from source:
 
 ```bash
 git clone https://github.com/stefbo/doors-dwa-client.git
