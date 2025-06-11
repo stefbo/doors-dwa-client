@@ -3,3 +3,4 @@ beautifulsoup4
 lxml
 rdflib
 urllib3
+pytest

@@ -1,15 +1,16 @@
 from __future__ import annotations
 from typing import Dict, Any, List
 from dwa_client.auth import LoginSession
+from dwa_client.guid import GUID
 from dwa_client.transport import Transport, HTTPTransport
 from dwa_client.cache import Cache, NullCache
 from dwa_client.resources import (
     Folder,
-    Guid,
     Project,
     Document,
     DocumentObject,
     parse_doors_objects_from_html,
+    RemoteResource,
 )
 from rdflib import Graph
 import json
@@ -30,7 +31,7 @@ class DWAClient:
         self.login = login
         self.transport = transport or HTTPTransport(login)
         self.cache = cache or NullCache()
-        self._identity: Dict[Guid, "RemoteResource"] = {}
+        self._identity: Dict[GUID, RemoteResource] = {}
 
     # ---------- raw API helpers (was Api class) -------------------------
     def _post_json(self, path: str, payload: Dict[str, Any]) -> Any:
@@ -61,7 +62,7 @@ class DWAClient:
         return g
 
     # original get_children ------------------------------------------------
-    def _get_children_nodes(self, parent: Guid):
+    def _get_children_nodes(self, parent: GUID):
         data = {
             "parentGuid": str(parent),
             "configurationContext": "",
@@ -76,7 +77,7 @@ class DWAClient:
 
     def get_document_objects(
         self,
-        document_guid: Guid,
+        document_guid: GUID,
         start_index: int = 0,
         fetch_count: int = 10000,
         view_guid: str | None = None,
@@ -113,7 +114,7 @@ class DWAClient:
         raise RuntimeError("Unexpected JSON response from DOORS DWA.")
 
     # ---------- public domain helpers ------------------------------------
-    def get_folder(self, guid: Guid) -> Folder:
+    def get_folder(self, guid: GUID) -> Folder:
         if guid in self._identity:
             return self._identity[guid]  # type: ignore[return-value]
         # minimal metadata until first access
@@ -121,7 +122,7 @@ class DWAClient:
         self._identity[guid] = proxy
         return proxy
 
-    def get_document(self, guid: Guid) -> Document:
+    def get_document(self, guid: GUID) -> Document:
         if guid in self._identity:
             return self._identity[guid]
         # minimal metadata until first access
@@ -129,12 +130,14 @@ class DWAClient:
         self._identity[guid] = proxy
         return proxy
 
-    def get_root_folder(self, guid: str | Guid) -> Folder:
-        return self.get_folder(Guid(str(guid)))
+    def get_root_folder(self, guid: str | GUID) -> Folder:
+        if isinstance(guid, GUID):
+            return self.get_folder(guid)
+        return self.get_folder(GUID.from_string(str(guid)))
 
     # used internally by Folder.get_children()
-    def _instantiate_from_node(self, node: dict[str, Any]) -> "RemoteResource":
-        guid = Guid(node["guid"])
+    def _instantiate_from_node(self, node: dict[str, Any]) -> RemoteResource:
+        guid = GUID.from_string(node["guid"])
         if guid in self._identity:
             res = self._identity[guid]
             res._hydrate(node)  # type: ignore[attr-defined]

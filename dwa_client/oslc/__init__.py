@@ -18,6 +18,7 @@ from dwa_client.oslc.common import (
     JD_DISC,
     RDFS,
 )
+from dwa_client.oslc.urn import URN
 
 __all__ = [
     "OSLCClient",
@@ -37,4 +38,6 @@ __all__ = [
     "DCTERMS",
     "JD_DISC",
     "RDFS",
+    # Utils:
+    "URN",
 ]

@@ -3,6 +3,7 @@ from typing import Any, Dict, Iterator, List, TYPE_CHECKING
 from dataclasses import dataclass, field
 from bs4 import BeautifulSoup
 from typing import Optional
+from dwa_client.guid import GUID
 import json
 
 # -------------------------------------------------------------------
@@ -23,7 +24,7 @@ class RemoteResource:
     """
 
     def __init__(
-        self, client: DWAClient, guid: "Guid", meta: Dict[str, Any] | None = None
+        self, client: "DWAClient", guid: "GUID", meta: Dict[str, Any] | None = None
     ) -> None:
         self._client = client
         self.guid = guid
@@ -52,11 +53,11 @@ class Folder(RemoteResource):
     _children_cache: List["RemoteResource"] | None = field(default=None, init=False)
 
     # used only by DWAClient
-    def __init__(self, client: DWAClient, node: Dict[str, Any]):
-        super().__init__(client, Guid(node["guid"]), node)
+    def __init__(self, client: "DWAClient", node: Dict[str, Any]):
+        super().__init__(client, GUID.from_string(node["guid"]), node)
 
     @classmethod
-    def _from_stub(cls, client: DWAClient, guid: "Guid"):
+    def _from_stub(cls, client: "DWAClient", guid: "GUID"):
         return cls(client, {"guid": str(guid), "mainAttribute": str(guid)})
 
     # --------------- navigation ---------------------------
@@ -186,30 +187,3 @@ def parse_doors_objects_from_html(html: str) -> List[DocumentObject]:
             )
         )
     return artifacts
-
-
-# class Object(RemoteResource):
-#     """
-#     Represents a requirement (“object”) row inside a module.
-#     """
-
-#     def __init__(self, client: DWAClient, node: Dict[str, Any]):
-#         super().__init__(client, Guid(node["guid"]), node)
-
-#     # module-specific helpers here: get_text(), links(), etc.
-
-#     def _lazy_load(self):
-#         # placeholder – real call similar to _get_page
-#         self._loaded = True
-
-
-class Guid(str):
-    """
-    Simple value-object wrapper.  Sub-classing str lets us keep
-    hashing/comparison fast & natural: Guid("…") == "…"  ➜ True
-    """
-
-    def __new__(cls, value: str) -> "Guid":
-        return str.__new__(cls, value)
-        # placeholder – real call similar to _get_page
-        self._loaded = True
