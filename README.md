@@ -9,7 +9,13 @@
 
 ## Installation
 
-Clone this repository and install locally:
+Install from PyPI:
+
+```bash
+pip install doors-dwa-client
+```
+
+Alternatively, install from source:
 
 ```bash
 git clone https://github.com/stefbo/doors-dwa-client.git
@@ -44,7 +50,7 @@ This script logs in, navigates to a folder (such as the "Projects" root), and pr
 
 ```python
 from dwa_client.auth import LoginSession
-from dwa_client import DWAClient, Guid
+from dwa_client import DWAClient, GUID
 from dwa_client.printers import FolderTreePrinter
 from dwa_client.cache import SQLiteCache
 
@@ -54,7 +60,7 @@ login.login()
 client = DWAClient(login)
 
 # Get the root folder (replace with your folder GUID)
-projects_guid = Guid("YOUR_PROJECTS_FOLDER_GUID")
+projects_guid = GUID.from_string("YOUR_PROJECTS_FOLDER_GUID")
 root_folder = client.get_root_folder(projects_guid)
 
 # Print the folder tree
@@ -74,7 +80,7 @@ login.login()
 client = DWAClient(login)
 
 # Replace with your document GUID
-document_guid = Guid("YOUR_DOCUMENT_GUID")
+document_guid = GUID.from_string("YOUR_DOCUMENT_GUID")
 doc = client.get_document(document_guid)
 
 objects = doc.get_objects(start_index=0, fetch_count=100)
