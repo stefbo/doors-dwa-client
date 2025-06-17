@@ -145,7 +145,7 @@ class DocumentObject:
 
 
 def parse_doors_objects_from_html(html: str) -> List[DocumentObject]:
-    soup = BeautifulSoup(html, "lxml")
+    soup = BeautifulSoup(html, "xml")
     artifacts: List[DocumentObject] = []
     for table in soup.find_all(
         "table", attrs={"guid": True, "urn": True, "objectid": True}
