@@ -10,6 +10,7 @@ from dwa_client.oslc.views import (
     ResourceShapeView,
     ServiceProviderView,
     ServiceProviderCatalogView,
+    Occurs,
 )
 from dwa_client.oslc.common import (
     OSLC,
@@ -32,6 +33,7 @@ __all__ = [
     "ResourceShapeView",
     "ServiceProviderView",
     "ServiceProviderCatalogView",
+    "Occurs",
     # Namespaces:
     "OSLC",
     "OSLC_RM",

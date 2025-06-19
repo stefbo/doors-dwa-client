@@ -1,10 +1,16 @@
 from __future__ import annotations
 from typing import Any, Dict, Iterator, List, TYPE_CHECKING
 from dataclasses import dataclass, field
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, XMLParsedAsHTMLWarning
 from typing import Optional
 from dwa_client.guid import GUID
 import json
+import warnings
+
+# Suppress warnings about BeautifulSoup parsing XML as HTML. This is necessary
+# because DOORS Web Access (DWA) returns XML responses that BeautifulSoup
+# interprets as HTML, which can lead to warnings about XML parsing.
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 # -------------------------------------------------------------------
 # Avoid a run-time import loop: only import DWAClient when a
@@ -145,7 +151,7 @@ class DocumentObject:
 
 
 def parse_doors_objects_from_html(html: str) -> List[DocumentObject]:
-    soup = BeautifulSoup(html, "xml")
+    soup = BeautifulSoup(html, "lxml")  # Note: lxml is required for parsing DOORS HTML
     artifacts: List[DocumentObject] = []
     for table in soup.find_all(
         "table", attrs={"guid": True, "urn": True, "objectid": True}
