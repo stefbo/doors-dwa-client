@@ -1,5 +1,5 @@
 import pytest
-from dwa_client.oslc.urn import URN
+from dwa_client.oslc.urn import URN, module_urn_from_object_urn
 from dwa_client.guid import DWAResourceType
 
 
@@ -127,3 +127,13 @@ def test_urn_hash_in_collections() -> None:
     assert urn2 in urn_set
     urn_dict = {urn1: "module", urn3: "folder"}
     assert urn_dict[urn2] == "module"
+
+
+def test_module_urn_from_object_urn() -> None:
+    module_urn_str = "urn:rational::1-48beda447cfb0c27-M-0000fa00"
+    object_urn_str = "urn:rational::1-48beda447cfb0c27-O-13-0000fa00"
+    object_urn = URN.from_string(object_urn_str)
+    expected_module_urn = URN.from_string(module_urn_str)
+    result = module_urn_from_object_urn(object_urn)
+    assert result == expected_module_urn
+    assert str(result) == module_urn_str

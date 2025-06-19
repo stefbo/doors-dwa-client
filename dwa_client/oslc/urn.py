@@ -146,3 +146,15 @@ class URN:
         return hash(
             (self.dbid, self.resource_type, self.key, self.object_no, self.module_key)
         )
+
+
+def module_urn_from_object_urn(obj_urn: URN) -> URN:
+    """Create a module URN from an object URN."""
+    if obj_urn.get_resource_type() != DWAResourceType.OBJECT:
+        raise ValueError("Expected an OBJECT URN")
+
+    return URN(
+        dbid=obj_urn.get_dbid(),
+        resource_type=DWAResourceType.MODULE,
+        key=obj_urn.get_module_key(),  # 8-hex-digit module key
+    )
