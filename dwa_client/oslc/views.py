@@ -18,9 +18,12 @@ class ResourceView:
         self.client = client
         self.graph = graph
         self.node: URIRef = node
+        self.is_populated: Optional[bool] = None  # yes/no/maybe
 
     def make_sure_populated(self) -> None:
-        self.client.get_url(self.node, self.graph)
+        if self.is_populated is None or not self.is_populated:
+            self.client.get_url(self.node, self.graph)
+            self.is_populated = True
 
 
 class StatementView(ResourceView):
