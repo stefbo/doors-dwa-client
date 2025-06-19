@@ -1,9 +1,8 @@
 from __future__ import annotations
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from dwa_client.auth import LoginSession
 from dwa_client.guid import GUID
 from dwa_client.transport import Transport, HTTPTransport
-from dwa_client.cache import Cache, NullCache
 from dwa_client.resources import (
     Folder,
     Project,
@@ -14,6 +13,9 @@ from dwa_client.resources import (
 )
 from rdflib import Graph
 import json
+import logging
+
+logger = logging.getLogger("dwa_client")
 
 
 class DWAClient:
@@ -26,22 +28,21 @@ class DWAClient:
         self,
         login: LoginSession,
         transport: Transport | None = None,
-        cache: Cache | None = None,
     ) -> None:
         self.login = login
         self.transport = transport or HTTPTransport(login)
-        self.cache = cache or NullCache()
         self._identity: Dict[GUID, RemoteResource] = {}
 
     # ---------- raw API helpers (was Api class) -------------------------
-    def _post_json(self, path: str, payload: Dict[str, Any]) -> Any:
+    def _post_json(
+        self,
+        path: str,
+        payload: Dict[str, Any],
+        headers: Optional[Dict[str, str]] = None,
+    ) -> Any:
         url = f"{self.login.base_url}/{path.lstrip('/')}"
-        cached = self.cache.get(url + str(sorted(payload.items())))
-        if cached:
-            return cached
-        resp = self.transport.post(url, payload)
+        resp = self.transport.post(url, payload, headers=headers)
         result = resp.json()
-        self.cache.put(url + str(sorted(payload.items())), result)
         return result
 
     def _post_raw(self, path: str, payload: Dict[str, Any]) -> str:
@@ -112,6 +113,33 @@ class DWAClient:
             msg = reason.get("logMsg") or reason.get("msgKey") or "Unknown error"
             raise RuntimeError(f"DOORS DWA error: {msg}")
         raise RuntimeError("Unexpected JSON response from DOORS DWA.")
+
+    def get_document_attributes(
+        self,
+        document_guid: GUID,
+    ) -> Dict[str, Any]:
+        """
+        Fetches and parses all attributes for a document.
+        Returns the parsed JSON document containing all attributes.
+        Raises RuntimeError if the server returns an error.
+        """
+
+        payload: dict[str, str] = {
+            "objectGuid": str(document_guid),
+            "dwaUser": self.login.user,
+            "DWA_TOKEN": self.login.token,
+        }
+
+        raw: str = self._post_raw("dwa/json/doors/node/getAttributes", payload)
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            logger.warning(
+                "Failed to parse JSON response from DOORS DWA (`getAttributes` for %s). Response: %s",
+                document_guid,
+                raw,
+            )
+            return {}  # Return empty dict if parsing fails
 
     # ---------- public domain helpers ------------------------------------
     def get_folder(self, guid: GUID) -> Folder:

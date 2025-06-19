@@ -120,6 +120,20 @@ class Document(Folder):
             view_guid=view_guid,
         )
 
+    def get_attributes(self) -> Dict[str, str]:
+        """Uses the `getAttributes` endpoint to fetch the document's attributes.
+
+        Attributes include user-defined metadata like name, prefix as well as
+        system attributes like URL or creation and modification dates.
+
+        Note: Keys seem to be language dependent, so we do not hardcode them.
+        Example paths:
+        - /Attributes/Benutzer/values/Name: e.g. "TSR"
+        - /Attributes/Benutzer/values/Prefix: e.g. "ABC_TRS_"
+        - /Attributes/System/values/URL: e.g. "https://doors.example.com/doors/TRS"
+        """
+        return self._client.get_document_attributes(self.guid)
+
 
 class DocumentObject:
     """

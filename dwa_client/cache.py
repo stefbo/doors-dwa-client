@@ -26,13 +26,13 @@ class SQLiteCache(Cache):
         if expiry and expiry < time.time():
             self.invalidate(key)
             return None
-        return json.loads(body)
+        return body
 
     def put(self, key: str, value: Any, ttl: int | None = 3600):
         expiry = (time.time() + ttl) if ttl else None
         self._con.execute(
             "REPLACE INTO resources(url, body, expiry) VALUES (?,?,?)",
-            (key, json.dumps(value), expiry),
+            (key, value, expiry),
         )
         self._con.commit()
 

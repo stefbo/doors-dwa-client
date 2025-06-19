@@ -50,7 +50,7 @@ class OSLCClient:
         if g is None:
             g = Graph()
         g.parse(data=resp.content, format="xml")
-        self.cache.put(url, resp.content)
+        self.cache.put(url, resp.text)  # str required
         return g
 
     def get_root_catalog(self) -> "ServiceProviderCatalogView":
