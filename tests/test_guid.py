@@ -191,3 +191,30 @@ def test_guid_from_urn(urn_str: str, expected_guid_str: str) -> None:
     urn = URN.from_string(urn_str)
     guid = GUID.from_urn(urn)
     assert str(guid) == expected_guid_str
+
+
+def test_guid_hash_equality() -> None:
+    # Identical GUIDs should have the same hash and be equal
+    guid1 = GUID.from_string("AB:48beda447cfb0c27:21:2100003c20:28ffffffff:{null,0}")
+    guid2 = GUID.from_string("AB:48beda447cfb0c27:21:2100003c20:28ffffffff:{null,0}")
+    assert guid1 == guid2
+    assert hash(guid1) == hash(guid2)
+
+
+def test_guid_hash_inequality() -> None:
+    # Different GUIDs should have different hashes (very likely)
+    guid1 = GUID.from_string("AB:48beda447cfb0c27:21:2100003c20:28ffffffff:{null,0}")
+    guid2 = GUID.from_string("AB:48beda447cfb0c27:1f:1f0000500d:28ffffffff")
+    assert guid1 != guid2
+    assert hash(guid1) != hash(guid2)
+
+
+def test_guid_hash_in_collections() -> None:
+    # GUIDs should be usable as dict keys and set members
+    guid1 = GUID.from_string("AB:48beda447cfb0c27:21:2100003c20:28ffffffff:{null,0}")
+    guid2 = GUID.from_string("AB:48beda447cfb0c27:21:2100003c20:28ffffffff:{null,0}")
+    guid3 = GUID.from_string("AB:48beda447cfb0c27:1f:1f00000003:28ffffffff")
+    guid_set = {guid1, guid3}
+    assert guid2 in guid_set
+    guid_dict = {guid1: "module", guid3: "folder"}
+    assert guid_dict[guid2] == "module"

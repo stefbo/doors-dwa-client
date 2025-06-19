@@ -130,3 +130,19 @@ class URN:
             f"URN(dbid={self.dbid!r}, resource_type={self.resource_type!r}, "
             f"key={self.key!r}, object_no={self.object_no!r}, module_key={self.module_key!r})"
         )
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, URN):
+            return NotImplemented
+        return (
+            self.dbid == other.dbid
+            and self.resource_type == other.resource_type
+            and self.key == other.key
+            and self.object_no == other.object_no
+            and self.module_key == other.module_key
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (self.dbid, self.resource_type, self.key, self.object_no, self.module_key)
+        )

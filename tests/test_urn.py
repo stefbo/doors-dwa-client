@@ -100,3 +100,30 @@ def test_urn_from_guid(guid_str: str, expected_urn: str) -> None:
     guid = GUID.from_string(guid_str)
     urn = URN.from_guid(guid)
     assert str(urn) == expected_urn
+
+
+def test_urn_hash_equality() -> None:
+    # Identical URNs should have the same hash and be equal
+    urn1 = URN.from_string("urn:rational::1-48beda447cfb0c27-M-00003c20")
+    urn2 = URN.from_string("urn:rational::1-48beda447cfb0c27-M-00003c20")
+    assert urn1 == urn2
+    assert hash(urn1) == hash(urn2)
+
+
+def test_urn_hash_inequality() -> None:
+    # Different URNs should have different hashes (very likely)
+    urn1 = URN.from_string("urn:rational::1-48beda447cfb0c27-M-00003c20")
+    urn2 = URN.from_string("urn:rational::1-48beda447cfb0c27-P-0000500d")
+    assert urn1 != urn2
+    assert hash(urn1) != hash(urn2)
+
+
+def test_urn_hash_in_collections() -> None:
+    # URNs should be usable as dict keys and set members
+    urn1 = URN.from_string("urn:rational::1-48beda447cfb0c27-M-00003c20")
+    urn2 = URN.from_string("urn:rational::1-48beda447cfb0c27-M-00003c20")
+    urn3 = URN.from_string("urn:rational::1-48beda447cfb0c27-F-00000003")
+    urn_set = {urn1, urn3}
+    assert urn2 in urn_set
+    urn_dict = {urn1: "module", urn3: "folder"}
+    assert urn_dict[urn2] == "module"

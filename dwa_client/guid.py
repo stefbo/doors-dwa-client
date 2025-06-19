@@ -70,6 +70,18 @@ class BaselineKey:
         else:
             return f"{{{self.baseline_id},{self.epoch}}}"
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, BaselineKey):
+            return NotImplemented
+        return (
+            self.is_legacy == other.is_legacy
+            and self.baseline_id == other.baseline_id
+            and self.epoch == other.epoch
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.is_legacy, self.baseline_id, self.epoch))
+
 
 class GUID:
     """Immutable, hashable wrapper for a DOORS Classic GUID."""
@@ -212,4 +224,26 @@ class GUID:
         return (
             f"GUID(dbid={self.dbid!r}, typecode={self.typecode!r}, "
             f"parent_key={self.parent_key!r}, object_key={self.object_key!r}, baseline_key={self.baseline_key!r})"
+        )
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GUID):
+            return NotImplemented
+        return (
+            self.dbid == other.dbid
+            and self.typecode == other.typecode
+            and self.parent_key == other.parent_key
+            and self.object_key == other.object_key
+            and self.baseline_key == other.baseline_key
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.dbid,
+                self.typecode,
+                self.parent_key,
+                self.object_key,
+                self.baseline_key,
+            )
         )
