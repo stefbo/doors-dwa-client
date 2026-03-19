@@ -196,6 +196,11 @@ def parse_doors_objects_from_html(html: str) -> List[DocumentObject]:
                 else:
                     heading_text = full_heading
 
+            # Fallback for DOORS Classic format: heading number is in paragraphNumber
+            # attribute and heading type is indicated by ObjectType enum "Heading" in col6.
+            if heading_num is None and col6.get_text(strip=True) == "Heading":
+                heading_num = paragraph_number
+
         artifacts.append(
             DocumentObject(
                 urn=urn,
